@@ -18,7 +18,7 @@ public class AvaliacaoService {
         return repository.listarTodas();
     }
 
-    public Avaliacao buscarPorId(int id) {
+    public Avaliacao buscarPorId(Integer id) {
         return repository.buscarPorId(id);
     }
 
@@ -29,7 +29,7 @@ public class AvaliacaoService {
         return repository.salvar(avaliacao);
     }
 
-    public boolean removerAvaliacao(int id) {
+    public boolean removerAvaliacao(Integer id) {
         return repository.remover(id);
     }
 }
