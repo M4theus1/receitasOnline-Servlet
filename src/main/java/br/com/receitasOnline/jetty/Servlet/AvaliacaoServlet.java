@@ -1,5 +1,7 @@
-package br.com.receitasOnline.jetty;
+package br.com.receitasOnline.jetty.Servlet;
 
+import br.com.receitasOnline.jetty.Entidades.Avaliacao;
+import br.com.receitasOnline.jetty.Services.AvaliacaoService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;

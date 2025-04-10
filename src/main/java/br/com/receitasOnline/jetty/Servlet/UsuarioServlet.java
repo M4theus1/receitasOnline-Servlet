@@ -1,5 +1,7 @@
-package br.com.receitasOnline.jetty;
+package br.com.receitasOnline.jetty.Servlet;
 
+import br.com.receitasOnline.jetty.Entidades.Usuario;
+import br.com.receitasOnline.jetty.Services.UsuarioService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.annotation.WebServlet;

@@ -1,9 +1,10 @@
-package br.com.receitasOnline.jetty;
+package br.com.receitasOnline.jetty.Services;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import br.com.receitasOnline.jetty.Entidades.Avaliacao;
+import br.com.receitasOnline.jetty.Entidades.Receita;
+import br.com.receitasOnline.jetty.Repository.ReceitaRepository;
+
 import java.util.List;
-import java.util.Map;
 
 public class ReceitaService {
     private final ReceitaRepository repository = new ReceitaRepository();

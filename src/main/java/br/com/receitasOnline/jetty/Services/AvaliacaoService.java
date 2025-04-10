@@ -1,6 +1,8 @@
-package br.com.receitasOnline.jetty;
+package br.com.receitasOnline.jetty.Services;
 
-import br.com.receitasOnline.jetty.AvaliacaoRepository;
+import br.com.receitasOnline.jetty.Repository.AvaliacaoRepository;
+import br.com.receitasOnline.jetty.Entidades.Avaliacao;
+
 import java.util.List;
 
 // AvaliacaoService.java

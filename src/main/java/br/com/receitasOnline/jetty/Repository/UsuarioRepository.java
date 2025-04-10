@@ -1,6 +1,6 @@
-package br.com.receitasOnline.jetty;
+package br.com.receitasOnline.jetty.Repository;
 
-import br.com.receitasOnline.jetty.Usuario;
+import br.com.receitasOnline.jetty.Entidades.Usuario;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

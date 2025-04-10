@@ -1,5 +1,8 @@
 package br.com.receitasOnline.jetty;
 
+import br.com.receitasOnline.jetty.Servlet.AvaliacaoServlet;
+import br.com.receitasOnline.jetty.Servlet.ReceitaServlet;
+import br.com.receitasOnline.jetty.Servlet.UsuarioServlet;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;

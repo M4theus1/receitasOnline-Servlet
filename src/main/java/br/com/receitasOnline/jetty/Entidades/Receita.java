@@ -1,4 +1,4 @@
-package br.com.receitasOnline.jetty;
+package br.com.receitasOnline.jetty.Entidades;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -1,4 +1,4 @@
-package br.com.receitasOnline.jetty;
+package br.com.receitasOnline.jetty.Entidades;
 
 public class Usuario {
     private Integer id;

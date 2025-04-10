@@ -1,4 +1,7 @@
-package br.com.receitasOnline.jetty;
+package br.com.receitasOnline.jetty.Services;
+
+import br.com.receitasOnline.jetty.Entidades.Usuario;
+import br.com.receitasOnline.jetty.Repository.UsuarioRepository;
 
 import java.util.List;
 
