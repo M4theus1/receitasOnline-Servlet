@@ -2,12 +2,17 @@ package br.com.receitasOnline.jetty.Services;
 
 import br.com.receitasOnline.jetty.Entidades.Avaliacao;
 import br.com.receitasOnline.jetty.Entidades.Receita;
+import br.com.receitasOnline.jetty.Entidades.Usuario;
 import br.com.receitasOnline.jetty.Repository.ReceitaRepository;
+import br.com.receitasOnline.jetty.Repository.AvaliacaoRepository;
+import br.com.receitasOnline.jetty.Repository.UsuarioRepository;
 
 import java.util.List;
 
 public class ReceitaService {
     private final ReceitaRepository repository = new ReceitaRepository();
+    private final AvaliacaoRepository avaliacaoRepository = new AvaliacaoRepository();
+    private final UsuarioRepository usuarioRepository = new UsuarioRepository();
 
     public Receita criarReceita(Receita receita) {
         if (receita.getTitulo() == null || receita.getTitulo().trim().isEmpty()) {
@@ -29,19 +34,23 @@ public class ReceitaService {
         if (receita == null) {
             throw new IllegalArgumentException("Receita não encontrada");
         }
-        if (avaliacao.getNota() < 1 || avaliacao.getNota() > 5) {
-            throw new IllegalArgumentException("A nota deve ser entre 1 e 5");
-        }
-        receita.adicionarAvaliacao(avaliacao);
-        return avaliacao;
-    }
 
-    public List<Avaliacao> listarAvaliacoes(int receitaId) {
-        Receita receita = repository.buscarPorId(receitaId);
-        if (receita == null) {
-            throw new IllegalArgumentException("Receita não encontrada");
+        if (avaliacao.getUsuario() == null || avaliacao.getUsuario().getId() == null) {
+            throw new IllegalArgumentException("Usuário é obrigatório");
         }
-        return receita.getAvaliacoes();
+
+        // 🔥 Busca o usuário completo usando o ID
+        Usuario usuarioCompleto = usuarioRepository.buscarPorId(avaliacao.getUsuario().getId());
+        if (usuarioCompleto == null) {
+            throw new IllegalArgumentException("Usuário não encontrado");
+        }
+
+        avaliacao.setUsuario(usuarioCompleto);
+        avaliacao.setReceita(receita);
+        receita.adicionarAvaliacao(avaliacao);
+        repository.salvar(receita);
+
+        return avaliacaoRepository.salvar(avaliacao);
     }
 
     public Receita atualizarReceita(Receita receita) {
@@ -54,4 +63,9 @@ public class ReceitaService {
     public boolean removerReceita(int id) {
         return repository.remover(id);
     }
+
+    public List<Avaliacao> listarAvaliacoes(int receitaId) {
+        return avaliacaoRepository.listarPorReceita(receitaId);
+    }
+
 }

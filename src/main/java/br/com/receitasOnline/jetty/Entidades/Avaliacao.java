@@ -7,6 +7,8 @@ public class Avaliacao {
     private int nota; // Exemplo: 1 a 5
     private String comentario;
 
+    public Avaliacao() {}
+
     public Avaliacao(Integer id, Usuario usuario, Receita receita, int nota, String comentario) {
         this.id = id;
         this.usuario = usuario;
@@ -16,8 +18,10 @@ public class Avaliacao {
     }
 
     public String formatarAvaliacao() {
-        return usuario.getNome() + " avaliou com " + nota + " estrelas: " + comentario;
+        String nomeUsuario = (usuario != null && usuario.getNome() != null) ? usuario.getNome() : "Usuário desconhecido";
+        return nomeUsuario + " avaliou com " + nota + " estrelas: " + comentario;
     }
+
 
     // Getters e Setters
 

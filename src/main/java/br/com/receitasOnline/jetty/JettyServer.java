@@ -1,6 +1,5 @@
 package br.com.receitasOnline.jetty;
 
-import br.com.receitasOnline.jetty.Servlet.AvaliacaoServlet;
 import br.com.receitasOnline.jetty.Servlet.ReceitaServlet;
 import br.com.receitasOnline.jetty.Servlet.UsuarioServlet;
 import org.eclipse.jetty.server.Server;
@@ -32,7 +31,7 @@ public class JettyServer {
         configureCORS(context);
         registerServlets(context);
 
-        context.setErrorHandler(new CustomErrorHandler());
+        //context.setErrorHandler(new CustomErrorHandler());
         server.setHandler(context);
 
         server.start();
@@ -53,7 +52,6 @@ public class JettyServer {
     private void registerServlets(ServletContextHandler context) {
         context.addServlet(new ServletHolder(new ReceitaServlet()), "/receitas/*");
         context.addServlet(new ServletHolder(new UsuarioServlet()), "/usuarios/*");
-        context.addServlet(new ServletHolder(new AvaliacaoServlet()), "/avaliacoes/*");
         context.addServlet(new ServletHolder(new HealthCheckServlet()), "/health");
     }
 
@@ -79,16 +77,16 @@ public class JettyServer {
         }
     }
 
-    static class CustomErrorHandler extends ErrorHandler {
-        @Override
-        public void handle(String target, Request baseRequest,
-                           HttpServletRequest request, HttpServletResponse response)
-                throws IOException {
-            response.setContentType("application/json");
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().println("{\"error\":\"Ocorreu um erro no servidor\"}");
-        }
-    }
+    //static class CustomErrorHandler extends ErrorHandler {
+       // @Override
+       // public void handle(String target, Request baseRequest,
+                          // HttpServletRequest request, HttpServletResponse response)
+                //throws IOException {
+            //response.setContentType("application/json");
+            //response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            //response.getWriter().println("{\"error\":\"Ocorreu um erro no servidor\"}");
+       // }
+   // }
 
     static class HealthCheckServlet extends HttpServlet {
         @Override

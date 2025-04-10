@@ -4,11 +4,12 @@ import br.com.receitasOnline.jetty.Entidades.Avaliacao;
 import br.com.receitasOnline.jetty.Entidades.Receita;
 import br.com.receitasOnline.jetty.Services.ReceitaService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -23,7 +24,6 @@ public class ReceitaServlet extends HttpServlet {
             String pathInfo = req.getPathInfo();
             resp.setContentType("application/json");
 
-            // Caso 1: Listar todas as receitas (/receitas)
             if (pathInfo == null || pathInfo.equals("/")) {
                 List<Receita> receitas = service.listarTodas();
                 mapper.writeValue(resp.getWriter(), receitas);
@@ -32,7 +32,6 @@ public class ReceitaServlet extends HttpServlet {
 
             String[] pathParts = pathInfo.split("/");
 
-            // Caso 2: Obter receita específica (/receitas/{id})
             if (pathParts.length == 2 && pathParts[1].matches("\\d+")) {
                 int id = Integer.parseInt(pathParts[1]);
                 Receita receita = service.buscarPorId(id);
@@ -45,9 +44,7 @@ public class ReceitaServlet extends HttpServlet {
                 return;
             }
 
-            // Caso 3: Listar avaliações (/receitas/{id}/avaliacoes)
-            if (pathParts.length == 3 && pathParts[1].matches("\\d+")
-                    && "avaliacoes".equals(pathParts[2])) {
+            if (pathParts.length == 3 && pathParts[1].matches("\\d+") && "avaliacoes".equals(pathParts[2])) {
                 int receitaId = Integer.parseInt(pathParts[1]);
                 List<Avaliacao> avaliacoes = service.listarAvaliacoes(receitaId);
                 mapper.writeValue(resp.getWriter(), avaliacoes);
@@ -55,7 +52,6 @@ public class ReceitaServlet extends HttpServlet {
             }
 
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "URL inválida");
-
         } catch (NumberFormatException e) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID deve ser um número");
         } catch (Exception e) {
@@ -74,7 +70,6 @@ public class ReceitaServlet extends HttpServlet {
 
             String pathInfo = req.getPathInfo();
 
-            // Caso 1: Criar nova receita (/receitas)
             if (pathInfo == null || pathInfo.equals("/")) {
                 Receita receita = mapper.readValue(req.getReader(), Receita.class);
                 Receita novaReceita = service.criarReceita(receita);
@@ -84,21 +79,36 @@ public class ReceitaServlet extends HttpServlet {
                 return;
             }
 
-            // Caso 2: Adicionar avaliação (/receitas/{id}/avaliacoes)
             String[] pathParts = pathInfo.split("/");
-            if (pathParts.length == 3 && pathParts[1].matches("\\d+")
-                    && "avaliacoes".equals(pathParts[2])) {
+
+            if (pathParts.length == 3 && pathParts[1].matches("\\d+") && "avaliacoes".equals(pathParts[2])) {
                 int receitaId = Integer.parseInt(pathParts[1]);
                 Avaliacao avaliacao = mapper.readValue(req.getReader(), Avaliacao.class);
-                Avaliacao novaAvaliacao = service.adicionarAvaliacao(receitaId, avaliacao);
 
+                Receita receita = service.buscarPorId(receitaId);
+                if (receita == null) {
+                    resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Receita não encontrada");
+                    return;
+                }
+                avaliacao.setReceita(receita);
+
+                if (avaliacao.getUsuario() == null || avaliacao.getUsuario().getId() == null) {
+                    resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Usuário da avaliação é obrigatório");
+                    return;
+                }
+
+                if (avaliacao.getNota() < 1 || avaliacao.getNota() > 5) {
+                    resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Nota deve ser entre 1 e 5");
+                    return;
+                }
+
+                Avaliacao novaAvaliacao = service.adicionarAvaliacao(receitaId, avaliacao);
                 resp.setStatus(HttpServletResponse.SC_CREATED);
                 mapper.writeValue(resp.getWriter(), novaAvaliacao);
                 return;
             }
 
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "URL inválida");
-
         } catch (JsonProcessingException e) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "JSON inválido");
         } catch (IllegalArgumentException e) {
