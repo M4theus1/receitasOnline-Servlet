@@ -1,6 +1,7 @@
 package br.com.receitasOnline.jetty.Servlet;
 
 import br.com.receitasOnline.jetty.Entidades.Avaliacao;
+import br.com.receitasOnline.jetty.Entidades.Receita;
 import br.com.receitasOnline.jetty.Services.AvaliacaoService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.servlet.annotation.WebServlet;
@@ -54,19 +55,45 @@ public class AvaliacaoServlet extends HttpServlet {
                 return;
             }
 
-            Avaliacao avaliacao = mapper.readValue(req.getReader(), Avaliacao.class);
-            Avaliacao novaAvaliacao = service.criarAvaliacao(avaliacao);
+            String pathInfo = req.getPathInfo(); // Ex: /1
+            if (pathInfo == null || !pathInfo.matches("/\\d+")) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID da receita ausente ou inválido");
+                return;
+            }
 
+            int receitaId = Integer.parseInt(pathInfo.substring(1));
+
+            Avaliacao avaliacao = mapper.readValue(req.getReader(), Avaliacao.class);
+
+            if (avaliacao.getUsuario() == null || avaliacao.getUsuario().getId() == null) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID do usuário é obrigatório");
+                return;
+            }
+
+            if (avaliacao.getNota() < 1 || avaliacao.getNota() > 5) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "A nota deve ser entre 1 e 5");
+                return;
+            }
+
+            // Associa a receita informada via URL
+            Receita receita = new Receita();
+            receita.setId(receitaId);
+            avaliacao.setReceita(receita);
+
+            Avaliacao novaAvaliacao = service.criarAvaliacao(avaliacao);
             resp.setStatus(HttpServletResponse.SC_CREATED);
             mapper.writeValue(resp.getWriter(), novaAvaliacao);
+
         } catch (JsonProcessingException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "JSON inválido");
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "JSON inválido: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao criar avaliação");
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Erro ao criar avaliação: " + e.getMessage());
         }
     }
+
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
