@@ -1,5 +1,6 @@
 package br.com.receitasOnline.jetty;
 
+import br.com.receitasOnline.jetty.Servlet.AvaliacaoServlet;
 import br.com.receitasOnline.jetty.Servlet.ReceitaServlet;
 import br.com.receitasOnline.jetty.Servlet.UsuarioServlet;
 import org.eclipse.jetty.server.Server;
@@ -52,6 +53,7 @@ public class JettyServer {
     private void registerServlets(ServletContextHandler context) {
         context.addServlet(new ServletHolder(new ReceitaServlet()), "/receitas/*");
         context.addServlet(new ServletHolder(new UsuarioServlet()), "/usuarios/*");
+        context.addServlet(new ServletHolder(new AvaliacaoServlet()),"/avaliacoes/*");
         context.addServlet(new ServletHolder(new HealthCheckServlet()), "/health");
     }
 

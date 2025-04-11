@@ -9,9 +9,16 @@ import java.util.List;
 public class UsuarioService {
     private final UsuarioRepository repository = new UsuarioRepository();
 
+
     public Usuario criarUsuario(Usuario usuario) {
+        if (usuario.getNome() == null || usuario.getNome().trim().isEmpty()) {
+            throw new IllegalArgumentException("Nome é obrigatório");
+        }
         if (usuario.getEmail() == null || usuario.getEmail().trim().isEmpty()) {
             throw new IllegalArgumentException("Email é obrigatório");
+        }
+        if (repository.existeComEmail(usuario.getEmail())) {
+            throw new IllegalArgumentException("Já existe um usuário com este email");
         }
         return repository.salvar(usuario);
     }
@@ -24,8 +31,12 @@ public class UsuarioService {
         return repository.buscarPorId(id);
     }
 
+    public Usuario buscarPorEmail(String email) {
+        return repository.buscarPorEmail(email);
+    }
+
     public Usuario atualizarUsuario(Usuario usuario) {
-        if (repository.buscarPorId(usuario.getId()) == null) {
+        if (usuario.getId() == null || repository.buscarPorId(usuario.getId()) == null) {
             return null;
         }
         return repository.salvar(usuario);

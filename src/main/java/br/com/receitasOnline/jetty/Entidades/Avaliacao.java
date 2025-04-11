@@ -54,6 +54,9 @@ public class Avaliacao {
     }
 
     public void setNota(int nota) {
+        if(nota < 1 || nota > 5){
+            throw new IllegalArgumentException("Nota deve ser entre 1 e 5");
+        }
         this.nota = nota;
     }
 

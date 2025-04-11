@@ -47,7 +47,6 @@ public class ReceitaService {
 
         avaliacao.setUsuario(usuarioCompleto);
         avaliacao.setReceita(receita);
-        receita.adicionarAvaliacao(avaliacao);
         repository.salvar(receita);
 
         return avaliacaoRepository.salvar(avaliacao);

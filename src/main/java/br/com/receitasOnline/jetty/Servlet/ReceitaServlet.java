@@ -3,7 +3,6 @@ package br.com.receitasOnline.jetty.Servlet;
 import br.com.receitasOnline.jetty.Entidades.Avaliacao;
 import br.com.receitasOnline.jetty.Entidades.Receita;
 import br.com.receitasOnline.jetty.Services.ReceitaService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -20,162 +19,144 @@ public class ReceitaServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        try {
-            String pathInfo = req.getPathInfo();
-            resp.setContentType("application/json");
+        resp.setContentType("application/json");
+        String pathInfo = req.getPathInfo();
 
+        try {
             if (pathInfo == null || pathInfo.equals("/")) {
                 List<Receita> receitas = service.listarTodas();
-                mapper.writeValue(resp.getWriter(), receitas);
+                writeJson(resp, receitas);
                 return;
             }
 
             String[] pathParts = pathInfo.split("/");
 
-            if (pathParts.length == 2 && pathParts[1].matches("\\d+")) {
+            if (pathParts.length == 2 && isNumeric(pathParts[1])) {
                 int id = Integer.parseInt(pathParts[1]);
                 Receita receita = service.buscarPorId(id);
-
                 if (receita != null) {
-                    mapper.writeValue(resp.getWriter(), receita);
+                    writeJson(resp, receita);
                 } else {
-                    resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Receita não encontrada");
+                    sendNotFound(resp, "Receita não encontrada");
                 }
                 return;
             }
 
-            if (pathParts.length == 3 && pathParts[1].matches("\\d+") && "avaliacoes".equals(pathParts[2])) {
+            if (pathParts.length == 3 && isNumeric(pathParts[1]) && "avaliacoes".equals(pathParts[2])) {
                 int receitaId = Integer.parseInt(pathParts[1]);
                 List<Avaliacao> avaliacoes = service.listarAvaliacoes(receitaId);
-                mapper.writeValue(resp.getWriter(), avaliacoes);
+                writeJson(resp, avaliacoes);
                 return;
             }
 
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "URL inválida");
+            sendBadRequest(resp, "URL inválida");
         } catch (NumberFormatException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID deve ser um número");
+            sendBadRequest(resp, "ID deve ser um número");
         } catch (Exception e) {
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro interno no servidor");
+            sendServerError(resp, "Erro interno no servidor");
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        try {
-            if (!"application/json".equalsIgnoreCase(req.getContentType())) {
-                resp.sendError(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                        "Content-Type deve ser application/json");
-                return;
-            }
+        if (!isJsonRequest(req)) {
+            sendUnsupportedMedia(resp);
+            return;
+        }
 
+        try {
             String pathInfo = req.getPathInfo();
 
             if (pathInfo == null || pathInfo.equals("/")) {
                 Receita receita = mapper.readValue(req.getReader(), Receita.class);
                 Receita novaReceita = service.criarReceita(receita);
-
                 resp.setStatus(HttpServletResponse.SC_CREATED);
-                mapper.writeValue(resp.getWriter(), novaReceita);
-                return;
+                writeJson(resp, novaReceita);
+            } else {
+                sendBadRequest(resp, "URL inválida");
             }
-
-            String[] pathParts = pathInfo.split("/");
-
-            if (pathParts.length == 3 && pathParts[1].matches("\\d+") && "avaliacoes".equals(pathParts[2])) {
-                int receitaId = Integer.parseInt(pathParts[1]);
-                Avaliacao avaliacao = mapper.readValue(req.getReader(), Avaliacao.class);
-
-                Receita receita = service.buscarPorId(receitaId);
-                if (receita == null) {
-                    resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Receita não encontrada");
-                    return;
-                }
-                avaliacao.setReceita(receita);
-
-                if (avaliacao.getUsuario() == null || avaliacao.getUsuario().getId() == null) {
-                    resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Usuário da avaliação é obrigatório");
-                    return;
-                }
-
-                if (avaliacao.getNota() < 1 || avaliacao.getNota() > 5) {
-                    resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Nota deve ser entre 1 e 5");
-                    return;
-                }
-
-                Avaliacao novaAvaliacao = service.adicionarAvaliacao(receitaId, avaliacao);
-                resp.setStatus(HttpServletResponse.SC_CREATED);
-                mapper.writeValue(resp.getWriter(), novaAvaliacao);
-                return;
-            }
-
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "URL inválida");
-        } catch (JsonProcessingException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "JSON inválido");
-        } catch (IllegalArgumentException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao processar requisição");
+            sendBadRequest(resp, e.getMessage());
         }
     }
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        if (!isJsonRequest(req)) {
+            sendUnsupportedMedia(resp);
+            return;
+        }
+
         try {
-            if (!"application/json".equalsIgnoreCase(req.getContentType())) {
-                resp.sendError(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                        "Content-Type deve ser application/json");
-                return;
-            }
-
-            String pathInfo = req.getPathInfo();
-            if (pathInfo == null || !pathInfo.matches("/\\d+")) {
-                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "URL inválida");
-                return;
-            }
-
-            int id = Integer.parseInt(pathInfo.substring(1));
+            int id = extractId(req.getPathInfo());
             Receita receita = mapper.readValue(req.getReader(), Receita.class);
             receita.setId(id);
 
             Receita receitaAtualizada = service.atualizarReceita(receita);
-
             if (receitaAtualizada != null) {
-                mapper.writeValue(resp.getWriter(), receitaAtualizada);
+                writeJson(resp, receitaAtualizada);
             } else {
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Receita não encontrada");
+                sendNotFound(resp, "Receita não encontrada");
             }
-
-        } catch (JsonProcessingException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "JSON inválido");
         } catch (NumberFormatException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID inválido");
+            sendBadRequest(resp, "ID inválido");
         } catch (Exception e) {
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao atualizar receita");
+            sendServerError(resp, "Erro ao atualizar receita");
         }
     }
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
-            String pathInfo = req.getPathInfo();
-            if (pathInfo == null || !pathInfo.matches("/\\d+")) {
-                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "URL inválida");
-                return;
-            }
-
-            int id = Integer.parseInt(pathInfo.substring(1));
+            int id = extractId(req.getPathInfo());
             boolean removido = service.removerReceita(id);
 
             if (removido) {
                 resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
             } else {
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Receita não encontrada");
+                sendNotFound(resp, "Receita não encontrada");
             }
-
         } catch (NumberFormatException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID inválido");
+            sendBadRequest(resp, "ID inválido");
         } catch (Exception e) {
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao remover receita");
+            sendServerError(resp, "Erro ao remover receita");
         }
+    }
+
+    // ==== Métodos auxiliares reutilizáveis ====
+
+    private boolean isJsonRequest(HttpServletRequest req) {
+        return "application/json".equalsIgnoreCase(req.getContentType());
+    }
+
+    private int extractId(String pathInfo) throws NumberFormatException {
+        if (pathInfo == null || !pathInfo.matches("/\\d+")) {
+            throw new NumberFormatException("ID malformado");
+        }
+        return Integer.parseInt(pathInfo.substring(1));
+    }
+
+    private boolean isNumeric(String str) {
+        return str != null && str.matches("\\d+");
+    }
+
+    private void writeJson(HttpServletResponse resp, Object data) throws IOException {
+        mapper.writeValue(resp.getWriter(), data);
+    }
+
+    private void sendBadRequest(HttpServletResponse resp, String msg) throws IOException {
+        resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
+    }
+
+    private void sendNotFound(HttpServletResponse resp, String msg) throws IOException {
+        resp.sendError(HttpServletResponse.SC_NOT_FOUND, msg);
+    }
+
+    private void sendUnsupportedMedia(HttpServletResponse resp) throws IOException {
+        resp.sendError(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, "Content-Type deve ser application/json");
+    }
+
+    private void sendServerError(HttpServletResponse resp, String msg) throws IOException {
+        resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
     }
 }
